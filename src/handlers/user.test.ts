@@ -24,10 +24,6 @@ describe("/user", () => {
       c.set("db", db);
       await next();
     });
-    app.get("/something", (c) => {
-      console.log(true);
-      return c.json({ something: true });
-    });
     app.route("/user", user);
   });
 

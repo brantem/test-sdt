@@ -21,7 +21,6 @@ const userSchema = v.object({
 });
 
 user.post("/", validator.json(userSchema), async (c) => {
-  console.log("kjnsdkfjnakjfnskdjfnkasjdnfkajsdnf");
   const body = await c.req.valid("json");
 
   try {
