@@ -1,0 +1,21 @@
+meta {
+  name: /
+  type: http
+  seq: 2
+}
+
+put {
+  url: {{url}}/user/1
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "john@mail.com",
+    "firstName": "John",
+    "lastName": "Doe",
+    "birthDate": "2025-01-01",
+    "tz": "Asia/Jakarta"
+  }
+}
