@@ -2,14 +2,20 @@
   "name": "test-sdt",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts"
+    "dev": "tsx watch src/index.ts",
+    "test": "vitest"
   },
   "dependencies": {
     "@hono/node-server": "^1.13.8",
-    "hono": "^4.6.20"
+    "@hono/valibot-validator": "^0.5.2",
+    "better-sqlite3": "^11.8.1",
+    "hono": "^4.6.20",
+    "valibot": "^1.0.0-rc.0"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
     "@types/node": "^20.11.17",
-    "tsx": "^4.7.1"
+    "tsx": "^4.7.1",
+    "vitest": "^3.0.5"
   }
 }
