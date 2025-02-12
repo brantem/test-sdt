@@ -8,7 +8,7 @@ describe("/user", () => {
   let app: Hono;
   let db: Database;
 
-  const body = {
+  const john = {
     email: " John@mail.com ",
     firstName: " John ",
     lastName: " Doe ",
@@ -16,7 +16,7 @@ describe("/user", () => {
     location: " Asia/Jakarta ",
   };
 
-  beforeAll(() => {
+  beforeEach(() => {
     app = new Hono();
     db = initDb();
 
@@ -27,88 +27,129 @@ describe("/user", () => {
     app.route("/user", user);
   });
 
-  afterAll(() => {
+  afterEach(() => {
     db.close();
   });
 
-  test("POST /", async () => {
-    expect(db.prepare("SELECT * FROM users").all()).toStrictEqual([]);
-
-    // success
-    const res = await app.request("/user", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+  describe("POST /", () => {
+    it("successfully creates a user", async () => {
+      expect(db.prepare("SELECT * FROM users").all()).toStrictEqual([]);
+      const res = await app.request("/user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(john),
+      });
+      expect(db.prepare("SELECT * FROM users").all()).toStrictEqual([
+        {
+          id: 1,
+          email: "john@mail.com",
+          first_name: "John",
+          last_name: "Doe",
+          birth_date: "2025-01-01",
+          location: "Asia/Jakarta",
+        },
+      ]);
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({ success: true, error: null });
     });
-    expect(db.prepare("SELECT * FROM users").all()).toStrictEqual([
-      {
-        id: 1,
-        email: "john@mail.com",
-        first_name: "John",
-        last_name: "Doe",
-        birth_date: "2025-01-01",
-        location: "Asia/Jakarta",
-      },
-    ]);
-    expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ success: true, error: null });
 
-    // duplicated
-    const res2 = await app.request("/user", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+    it("fails when email is duplicated", async () => {
+      db.exec(`
+        INSERT INTO users (email, first_name, last_name, birth_date, location)
+        VALUES ('john@mail.com', 'John', 'Doe', '2025-01-01', 'Asia/Jakarta')
+      `);
+
+      const res = await app.request("/user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(john),
+      });
+      expect(res.status).toBe(422);
+      expect(await res.json()).toEqual({ success: false, error: { code: "EMAIL_SHOULD_BE_UNIQUE" } });
     });
-    expect(res2.status).toBe(422);
-    expect(await res2.json()).toEqual({ success: false, error: { code: "EMAIL_SHOULD_BE_UNIQUE" } });
   });
 
-  test("PUT /", async () => {
-    // success
-    const res = await app.request("/user/1", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email: " jane@mail.com ",
-        firstName: " Jane ",
-        lastName: " Doe ",
-        birthDate: " 2025-01-02 ",
-        location: " Asia/Bangkok ",
-      }),
-    });
-    expect(db.prepare("SELECT * FROM users").all()).toStrictEqual([
-      {
-        id: 1,
-        email: "jane@mail.com",
-        first_name: "Jane",
-        last_name: "Doe",
-        birth_date: "2025-01-02",
-        location: "Asia/Bangkok",
-      },
-    ]);
-    expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ success: true, error: null });
+  describe("PUT /:id", () => {
+    const jane = {
+      email: " jane@mail.com ",
+      firstName: " Jane ",
+      lastName: " Doe ",
+      birthDate: " 2025-01-02 ",
+      location: " Asia/Bangkok ",
+    };
 
-    // not found
-    const res2 = await app.request("/user/2", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+    beforeEach(async () => {
+      db.exec(`
+        INSERT INTO users (email, first_name, last_name, birth_date, location)
+        VALUES ('john@mail.com', 'John', 'Doe', '2025-01-01', 'Asia/Jakarta')
+      `);
     });
-    expect(res2.status).toBe(404);
-    expect(await res2.json()).toEqual({ success: false, error: { code: "NOT_FOUND" } });
+
+    it("successfully updates a user", async () => {
+      const res = await app.request("/user/1", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(jane),
+      });
+      expect(db.prepare("SELECT * FROM users").all()).toStrictEqual([
+        {
+          id: 1,
+          email: "jane@mail.com",
+          first_name: "Jane",
+          last_name: "Doe",
+          birth_date: "2025-01-02",
+          location: "Asia/Bangkok",
+        },
+      ]);
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({ success: true, error: null });
+    });
+
+    it("fails to update a nonexistent user", async () => {
+      const res = await app.request("/user/2", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(john),
+      });
+      expect(res.status).toBe(404);
+      expect(await res.json()).toEqual({ success: false, error: { code: "NOT_FOUND" } });
+    });
+
+    it("fails when email is duplicated", async () => {
+      db.exec(`
+        INSERT INTO users (email, first_name, last_name, birth_date, location)
+        VALUES ('jane@mail.com', 'Jane', 'Doe', '2025-01-01', 'Asia/Jakarta')
+      `);
+
+      const res = await app.request("/user/2", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...jane, email: "john@mail.com" }),
+      });
+      expect(res.status).toBe(422);
+      expect(await res.json()).toEqual({ success: false, error: { code: "EMAIL_SHOULD_BE_UNIQUE" } });
+    });
   });
 
-  test("DELETE /", async () => {
-    // success
-    const res = await app.request("/user/1", { method: "DELETE" });
-    expect(db.prepare("SELECT * FROM users").all()).toStrictEqual([]);
-    expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ success: true, error: null });
+  describe("DELETE /:id", () => {
+    beforeEach(async () => {
+      db.exec(`
+        INSERT INTO users (email, first_name, last_name, birth_date, location)
+        VALUES ('john@mail.com', 'John', 'Doe', '2025-01-01', 'Asia/Jakarta')
+      `);
+    });
 
-    // not found
-    const res2 = await app.request("/user/1", { method: "DELETE" });
-    expect(res2.status).toBe(404);
-    expect(await res2.json()).toEqual({ success: false, error: { code: "NOT_FOUND" } });
+    it("successfully deletes a user", async () => {
+      const res = await app.request("/user/1", { method: "DELETE" });
+      expect(db.prepare("SELECT * FROM users").all()).toStrictEqual([]);
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({ success: true, error: null });
+    });
+
+    it("fails to delete a nonexistent user", async () => {
+      const res = await app.request("/user/2", { method: "DELETE" });
+      expect(res.status).toBe(404);
+      expect(await res.json()).toEqual({ success: false, error: { code: "NOT_FOUND" } });
+    });
   });
 });
