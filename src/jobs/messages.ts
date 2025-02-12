@@ -43,7 +43,7 @@ function prepare(db: Database) {
     stmt.run(values.flat());
     console.log(`messages.prepare: Queued ${values.length} messages`);
   } catch (err) {
-    console.error(err);
+    console.error("messages.prepare", err);
   }
 }
 
@@ -76,12 +76,14 @@ function send(db: Database) {
       // TODO: send message
     }
 
+    // no need to do anything with the unsuccessful messages, they will be caught in the next hour
+
     if (successIds.length) {
       db.prepare(`DELETE FROM messages WHERE id IN (${successIds.map(() => "?").join(",")})`).run(successIds);
     }
     console.log(`messages.send: Successfully sent ${successIds.length} messages`);
   } catch (err) {
-    console.error(err);
+    console.error("messages.send", err);
   }
 }
 

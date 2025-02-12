@@ -29,7 +29,6 @@ app.use("*", async (c, next) => {
 app.route("/user", user);
 
 app.onError((err, c) => {
-  console.error(err);
   return c.json({ error: { code: "INTERNAL_SERVER_ERROR" } }, 500);
 });
 

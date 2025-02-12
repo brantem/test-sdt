@@ -38,6 +38,7 @@ user.post("/", validator.json(userSchema), async (c) => {
     if (err instanceof SqliteError && err.code === "SQLITE_CONSTRAINT_UNIQUE") {
       return c.json({ success: false, error: { code: "EMAIL_SHOULD_BE_UNIQUE" } }, 422);
     }
+    console.error("POST /user", err);
     throw err;
   }
 });
@@ -61,6 +62,7 @@ user.put("/:id", validator.json(userSchema), async (c) => {
     if (err instanceof SqliteError && err.code === "SQLITE_CONSTRAINT_UNIQUE") {
       return c.json({ success: false, error: { code: "EMAIL_SHOULD_BE_UNIQUE" } }, 422);
     }
+    console.error("POST /user/:id", err);
     throw err;
   }
 });
@@ -72,6 +74,7 @@ user.delete("/:id", async (c) => {
 
     return c.json({ success: true, error: null }, 200);
   } catch (err) {
+    console.error("DELETE /user/:id", err);
     throw err;
   }
 });
