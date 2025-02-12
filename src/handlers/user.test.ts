@@ -13,7 +13,7 @@ describe("/user", () => {
     firstName: " John ",
     lastName: " Doe ",
     birthDate: " 2025-01-01 ",
-    tz: " Asia/Jakarta ",
+    location: " Asia/Jakarta ",
   };
 
   beforeAll(() => {
@@ -51,7 +51,7 @@ describe("/user", () => {
         first_name: "John",
         last_name: "Doe",
         birth_date: "2025-01-01",
-        tz: "Asia/Jakarta",
+        location: "Asia/Jakarta",
       },
     ]);
     expect(res.status).toBe(200);
@@ -77,7 +77,7 @@ describe("/user", () => {
         firstName: " Jane ",
         lastName: " Doe ",
         birthDate: " 2025-01-02 ",
-        tz: " Asia/Bangkok ",
+        location: " Asia/Bangkok ",
       }),
     });
     expect(db.prepare("SELECT * FROM users").all()).toStrictEqual([
@@ -87,7 +87,7 @@ describe("/user", () => {
         first_name: "Jane",
         last_name: "Doe",
         birth_date: "2025-01-02",
-        tz: "Asia/Bangkok",
+        location: "Asia/Bangkok",
       },
     ]);
     expect(res.status).toBe(200);

@@ -12,7 +12,7 @@ const userSchema = v.object({
   firstName: v.pipe(v.string(), v.trim(), v.nonEmpty()),
   lastName: v.pipe(v.string(), v.trim(), v.nonEmpty()),
   birthDate: v.pipe(v.string(), v.trim(), v.isoDate(), v.nonEmpty()),
-  tz: v.pipe(
+  location: v.pipe(
     v.string(),
     v.trim(),
     v.custom((v) => isValidTimezone(v as string)),
@@ -26,8 +26,8 @@ user.post("/", validator.json(userSchema), async (c) => {
 
   try {
     const stmt = c.get("db").prepare(`
-      INSERT INTO users (email, first_name, last_name, birth_date, tz)
-      VALUES (@email, @firstName, @lastName, @birthDate, @tz)
+      INSERT INTO users (email, first_name, last_name, birth_date, location)
+      VALUES (@email, @firstName, @lastName, @birthDate, @location)
       RETURNING id
     `);
     stmt.run(body);
@@ -47,7 +47,7 @@ user.put("/:id", validator.json(userSchema), async (c) => {
   try {
     const stmt = c.get("db").prepare(`
       UPDATE users
-      SET email = @email, first_name = @firstName, last_name = @lastName, birth_date = @birthDate, tz = @tz
+      SET email = @email, first_name = @firstName, last_name = @lastName, birth_date = @birthDate, location = @location
       WHERE id = @id
     `);
     const result = stmt.run({ id: c.req.param("id"), ...body });

@@ -10,7 +10,7 @@ export function init(filename = ":memory:") {
       first_name TEXT NOT NULL,
       last_name TEXT NOT NULL,
       birth_date DATE NOT NULL,
-      tz TEXT NOT NULL,
+      location TEXT NOT NULL,
       UNIQUE (email)
     );
   `);
