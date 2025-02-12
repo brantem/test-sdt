@@ -7,7 +7,7 @@ import timezone from "dayjs/plugin/timezone.js";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
-function prepare(db: Database) {
+export function prepare(db: Database) {
   type User = {
     id: number;
     birth_date: string;
