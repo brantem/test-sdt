@@ -8,7 +8,7 @@ import { isValidTimezone } from "../lib/helpers.js";
 const user = new Hono();
 
 const userSchema = v.object({
-  email: v.pipe(v.string(), v.trim(), v.email(), v.nonEmpty()),
+  email: v.pipe(v.string(), v.trim(), v.toLowerCase(), v.email(), v.nonEmpty()),
   firstName: v.pipe(v.string(), v.trim(), v.nonEmpty()),
   lastName: v.pipe(v.string(), v.trim(), v.nonEmpty()),
   birthDate: v.pipe(v.string(), v.trim(), v.isoDate(), v.nonEmpty()),

@@ -9,7 +9,7 @@ describe("/user", () => {
   let db: Database;
 
   const body = {
-    email: " john@mail.com ",
+    email: " John@mail.com ",
     firstName: " John ",
     lastName: " Doe ",
     birthDate: " 2025-01-01 ",
