@@ -88,8 +88,6 @@ function send(db: Database) {
 }
 
 export function start(db: Database) {
-  // CronJob.from({ cronTime: "0 0 * * *", onTick: () => prepare(db), start: true });
-  CronJob.from({ cronTime: "* * * * *", onTick: () => prepare(db), start: true });
-  // CronJob.from({ cronTime: "0 * * * *", onTick: () => send(db), start: true });
-  CronJob.from({ cronTime: "*/30 * * * * *", onTick: () => send(db), start: true });
+  CronJob.from({ cronTime: "0 0 * * *", onTick: () => prepare(db), start: true }); // daily
+  CronJob.from({ cronTime: "0 * * * *", onTick: () => send(db), start: true }); // hourly
 }
