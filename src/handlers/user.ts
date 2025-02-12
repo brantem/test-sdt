@@ -31,6 +31,8 @@ user.post("/", validator.json(userSchema), async (c) => {
     `);
     stmt.run(body);
 
+    // TODO: queue
+
     return c.json({ success: true, error: null }, 200);
   } catch (err) {
     if (err instanceof SqliteError && err.code === "SQLITE_CONSTRAINT_UNIQUE") {
@@ -51,6 +53,8 @@ user.put("/:id", validator.json(userSchema), async (c) => {
     `);
     const result = stmt.run({ id: c.req.param("id"), ...body });
     if (!result.changes) return c.json({ success: false, error: { code: "NOT_FOUND" } }, 404);
+
+    // TODO: queue
 
     return c.json({ success: true, error: null }, 200);
   } catch (err) {

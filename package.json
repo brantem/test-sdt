@@ -2,13 +2,16 @@
   "name": "test-sdt",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "TZ=UTC tsx watch src/index.ts",
     "test": "vitest"
   },
   "dependencies": {
     "@hono/node-server": "^1.13.8",
     "@hono/valibot-validator": "^0.5.2",
     "better-sqlite3": "^11.8.1",
+    "cron": "^3.5.0",
+    "dayjs": "^1.11.13",
+    "dotenv": "^16.4.7",
     "hono": "^4.6.20",
     "valibot": "^1.0.0-rc.0"
   },

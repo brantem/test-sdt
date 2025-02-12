@@ -1,11 +1,14 @@
+import "dotenv/config";
+
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { logger } from "hono/logger";
 import type { Database } from "better-sqlite3";
 
 import user from "./handlers/user.js";
+import * as jobs from "./jobs/index.js";
 
-import * as db from "./lib/db.js";
+import { init as initDb } from "./lib/db.js";
 
 declare module "hono" {
   interface ContextVariableMap {
@@ -16,10 +19,11 @@ declare module "hono" {
 const app = new Hono();
 app.use(logger());
 
+const db = initDb(process.env.DB_PATH);
+
 app.use("*", async (c, next) => {
-  c.set("db", db.init(process.env.DB_PATH));
+  c.set("db", db);
   await next();
-  c.get("db").close();
 });
 
 app.route("/user", user);
@@ -29,6 +33,9 @@ app.onError((err, c) => {
   return c.json({ error: { code: "INTERNAL_SERVER_ERROR" } }, 500);
 });
 
-serve(app, (info) => console.log(`Server is running on http://localhost:${info.port}`));
+serve(app, (info) => {
+  jobs.start(db);
+  console.log(`Server is running on http://localhost:${info.port}`);
+});
 
 export default app;
