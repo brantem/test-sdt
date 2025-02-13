@@ -64,15 +64,13 @@ user.put("/:id", validator.json(userSchema), async (c) => {
     const result = stmt.run({ id, ...body });
     if (!result.changes) return c.json({ success: false, error: { code: "NOT_FOUND" } }, 404);
 
-    // IMPROVE: get previous data before updating
-    // if birth_date changes, remove the old message from the queue and requeue if needed
-
-    // always remove from queue
-    birthday.cancel(db, id);
-
     // requeue if needed
     const v = birthday.getUTCTimestamp(body.birthDate, body.location);
-    if (messages.isProcessable(v)) birthday.schedule(db, id, v);
+    if (messages.isProcessable(v)) {
+      birthday.schedule(db, id, v);
+    } else {
+      birthday.cancel(db, id); // IMPROVE: only run this if birth_date changes
+    }
 
     return c.json({ success: true, error: null }, 200);
   } catch (err) {

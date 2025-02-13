@@ -48,7 +48,7 @@ describe("birthday", () => {
       `);
     });
 
-    it("queues a message successfully", () => {
+    it("inserts a new message", () => {
       birthday.schedule(db, 1, birthday.getUTCTimestamp("2025-01-01", "Asia/Jakarta"));
       expect(db.prepare("SELECT * FROM messages").all()).toStrictEqual([
         {
@@ -56,6 +56,23 @@ describe("birthday", () => {
           user_id: 1,
           template_id: 1,
           process_at: "2025-01-01 02:00:00",
+        },
+      ]);
+    });
+
+    it("updates a message", () => {
+      db.exec(`
+        INSERT INTO messages (user_id, template_id, process_at)
+        VALUES (1, 1, '2025-01-01 02:00:00');
+      `);
+
+      birthday.schedule(db, 1, birthday.getUTCTimestamp("2025-01-01", "Asia/Hong_Kong"));
+      expect(db.prepare("SELECT * FROM messages").all()).toStrictEqual([
+        {
+          id: 1,
+          user_id: 1,
+          template_id: 1,
+          process_at: "2025-01-01 01:00:00",
         },
       ]);
     });

@@ -29,7 +29,8 @@ export function schedule(db: Database, userId: number, when: dayjs.Dayjs) {
     const stmt = db.prepare(`
       INSERT INTO messages (user_id, template_id, process_at)
       VALUES (?, 1, ?)
-      ON CONFLICT DO NOTHING
+      ON CONFLICT (user_id, template_id)
+      DO UPDATE SET process_at = EXCLUDED.process_at
     `);
     stmt.run(userId, dayjs(when).format("YYYY-MM-DD HH:mm:ss"));
   } catch (err) {
@@ -59,6 +60,8 @@ export function collect(db: Database) {
       .prepare<[string, string], User>("SELECT id, birth_date, location FROM users WHERE birth_date BETWEEN ? AND ?")
       .all(date, next.format("YYYY-MM-DD"));
     if (!users.length) return;
+
+    // TODO: use stmt.iterate
 
     const values = users.reduce((values, user) => {
       const v = getUTCTimestamp(user.birth_date, user.location);
