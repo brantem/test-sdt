@@ -73,7 +73,7 @@ describe("birthday", () => {
     });
 
     it("queues messages for users whose birthday is today in their timezone", () => {
-      vi.setSystemTime(new Date(2025, 0, 1, 0, 0)); // 2025-01-01
+      vi.setSystemTime(new Date(2025, 0, 1, 0, 0)); // 2025-01-01 00:00
       birthday.collect(db);
       expect(db.prepare("SELECT * FROM messages").all()).toStrictEqual([
         {
@@ -93,7 +93,7 @@ describe("birthday", () => {
     });
 
     it("prevents duplicate messages", () => {
-      vi.setSystemTime(new Date(2025, 0, 1, 0, 0)); // 2025-01-01
+      vi.setSystemTime(new Date(2025, 0, 1, 0, 0)); // 2025-01-01 00:00
       birthday.collect(db);
       birthday.collect(db);
       expect(db.prepare("SELECT * FROM messages").all()).toStrictEqual([
@@ -114,7 +114,7 @@ describe("birthday", () => {
     });
 
     it("handles birthdays in timezones ahead of UTC correctly", () => {
-      vi.setSystemTime(new Date(2025, 0, 0, 0, 0)); // 2024-12-31
+      vi.setSystemTime(new Date(2025, 0, 0, 0, 0)); // 2024-12-31 00:00
       birthday.collect(db);
       expect(db.prepare("SELECT * FROM messages").all()).toStrictEqual([
         {
