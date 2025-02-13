@@ -1,7 +1,7 @@
 import type { Database } from "better-sqlite3";
 import { CronJob } from "cron";
 import dayjs from "dayjs";
-import { sleep } from "../lib/helpers.js";
+import { processInBatches, sleep } from "../lib/helpers.js";
 
 export function isProcessable(v: dayjs.Dayjs) {
   const d = dayjs();
@@ -50,7 +50,7 @@ export async function send({ id, ...data }: Data) {
   return null;
 }
 
-async function handle(db: Database) {
+export async function handle(db: Database) {
   const concurrency = parseInt(process.env.EMAIL_SERVICE_CONCURRENCY || "1") || 1;
 
   try {
@@ -69,14 +69,13 @@ async function handle(db: Database) {
     console.log(`messages.handle: Found ${items.length} messages`);
 
     const successIds: Data["id"][] = [];
-    for (let i = 0; i < items.length; i += concurrency) {
-      const chunk = items.slice(i, i + concurrency);
-      const results = await Promise.allSettled(chunk.map((data) => send(data)));
+    await processInBatches(items, concurrency, async (items) => {
+      const results = await Promise.allSettled(items.map((data) => send(data)));
       results.forEach((result) => {
         if (result.status !== "fulfilled" || !result.value) return;
         successIds.push(result.value);
       });
-    }
+    });
 
     // no need to do anything with the unsuccessful messages, they will be caught in the next hour
 
