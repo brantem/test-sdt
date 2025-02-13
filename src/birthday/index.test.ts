@@ -9,6 +9,7 @@ describe("birthday", () => {
     const date = "2025-01-01";
     expect(birthday.getUTCTimestamp(date, "Pacific/Niue").format("YYYY-MM-DD HH:mm")).toBe("2025-01-01 20:00"); // UTC-11:00
     expect(birthday.getUTCTimestamp(date, "Asia/Jakarta").format("YYYY-MM-DD HH:mm")).toBe("2025-01-01 02:00"); // UTC+07:00
+    expect(birthday.getUTCTimestamp(date, "Asia/Tokyo").format("YYYY-MM-DD HH:mm")).toBe("2025-01-01 00:00"); // UTC+09:00
     expect(birthday.getUTCTimestamp(date, "Pacific/Kiritimati").format("YYYY-MM-DD HH:mm")).toBe("2024-12-31 19:00"); // UTC+14:00
   });
 
@@ -60,8 +61,9 @@ describe("birthday", () => {
         VALUES
           ('a@mail.com', 'a', 'a', '2025-01-01', 'Pacific/Niue'),       -- UTC-11:00
           ('b@mail.com', 'b', 'b', '2025-01-01', 'Asia/Jakarta'),       -- UTC+07:00
-          ('c@mail.com', 'c', 'c', '2025-01-01', 'Pacific/Kiritimati'), -- UTC+14:00
-          ('d@mail.com', 'd', 'd', '2025-01-02', 'Asia/Jakarta')        -- UTC+07:00
+          ('c@mail.com', 'c', 'c', '2025-01-01', 'Asia/Tokyo'),         -- UTC+09:00
+          ('d@mail.com', 'd', 'd', '2025-01-01', 'Pacific/Kiritimati'), -- UTC+14:00
+          ('e@mail.com', 'e', 'e', '2025-01-02', 'Asia/Jakarta')        -- UTC+07:00
       `);
     });
 
@@ -118,6 +120,12 @@ describe("birthday", () => {
         {
           id: 1,
           user_id: 3,
+          template_id: 1,
+          process_at: "2025-01-01 00:00:00",
+        },
+        {
+          id: 2,
+          user_id: 4,
           template_id: 1,
           process_at: "2024-12-31 19:00:00",
         },
