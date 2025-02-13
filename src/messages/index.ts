@@ -25,7 +25,7 @@ export async function send({ id, ...data }: Data) {
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
-      const response = await fetch(url, {
+      const response = await fetch(`${url}/send-email`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
