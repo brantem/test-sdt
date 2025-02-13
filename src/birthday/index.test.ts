@@ -12,6 +12,37 @@ describe("birthday", () => {
     expect(birthday.getUTCTimestamp(date, "Pacific/Kiritimati").format("YYYY-MM-DD HH:mm")).toBe("2024-12-31 19:00"); // UTC+14:00
   });
 
+  describe("schedule", () => {
+    let db: Database;
+
+    beforeEach(() => {
+      db = initDb();
+    });
+
+    afterEach(() => {
+      db.close();
+    });
+
+    beforeEach(() => {
+      db.exec(`
+        INSERT INTO users (email, first_name, last_name, birth_date, location)
+        VALUES ('a@mail.com', 'a', 'a', '2025-01-01', 'Asia/Jakarta')
+      `);
+    });
+
+    it("queues a message successfully", () => {
+      birthday.schedule(db, 1, birthday.getUTCTimestamp("2025-01-01", "Asia/Jakarta"));
+      expect(db.prepare("SELECT * FROM messages").all()).toStrictEqual([
+        {
+          id: 1,
+          user_id: 1,
+          template_id: 1,
+          process_at: "2025-01-01 02:00:00",
+        },
+      ]);
+    });
+  });
+
   describe("collect", () => {
     let db: Database;
 

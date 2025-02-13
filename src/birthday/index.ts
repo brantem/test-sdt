@@ -11,6 +11,19 @@ export function getUTCTimestamp(date: string, location: string) {
   return dayjs.tz(`${date}T09:00:00`, location).utc();
 }
 
+export function schedule(db: Database, userId: number, when: dayjs.Dayjs) {
+  try {
+    const stmt = db.prepare(`
+      INSERT INTO messages (user_id, template_id, process_at)
+      VALUES (?, 1, ?)
+      ON CONFLICT DO NOTHING
+    `);
+    stmt.run(userId, dayjs(when).format("YYYY-MM-DD HH:mm:ss"));
+  } catch (err) {
+    throw err;
+  }
+}
+
 export function collect(db: Database) {
   type User = {
     id: number;
