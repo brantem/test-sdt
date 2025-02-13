@@ -8,7 +8,7 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 
 export function getUTCTimestamp(date: string, location: string) {
-  return dayjs.tz(`${date}T09:00:00`, location).utc(); // TODO: dynamic
+  return dayjs.tz(`${date}T09:00:00`, location).utc(); // TODO: dynamic time
 }
 
 export function cancel(db: Database, userId: number) {

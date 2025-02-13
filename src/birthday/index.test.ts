@@ -17,8 +17,11 @@ describe("birthday", () => {
     const db = initDb();
 
     db.exec(`
-      INSERT INTO users (email, first_name, last_name, birth_date, location) VALUES ('a@mail.com', 'a', 'a', '2025-01-01', 'Asia/Jakarta');
-      INSERT INTO messages (user_id, template_id, process_at) VALUES (1, 1, '2025-01-01 02:00:00');
+      INSERT INTO users (email, first_name, last_name, birth_date, location)
+      VALUES ('a@mail.com', 'a', 'a', '2025-01-01', 'Asia/Jakarta');
+
+      INSERT INTO messages (user_id, template_id, process_at)
+      VALUES (1, 1, '2025-01-01 02:00:00');
     `);
 
     birthday.cancel(db, 1);
@@ -41,7 +44,7 @@ describe("birthday", () => {
     beforeEach(() => {
       db.exec(`
         INSERT INTO users (email, first_name, last_name, birth_date, location)
-        VALUES ('a@mail.com', 'a', 'a', '2025-01-01', 'Asia/Jakarta')
+        VALUES ('a@mail.com', 'a', 'a', '2025-01-01', 'Asia/Jakarta');
       `);
     });
 
@@ -77,7 +80,7 @@ describe("birthday", () => {
           ('b@mail.com', 'b', 'b', '2025-01-01', 'Asia/Jakarta'),       -- UTC+07:00
           ('c@mail.com', 'c', 'c', '2025-01-01', 'Asia/Tokyo'),         -- UTC+09:00
           ('d@mail.com', 'd', 'd', '2025-01-01', 'Pacific/Kiritimati'), -- UTC+14:00
-          ('e@mail.com', 'e', 'e', '2025-01-02', 'Asia/Jakarta')        -- UTC+07:00
+          ('e@mail.com', 'e', 'e', '2025-01-02', 'Asia/Jakarta');       -- UTC+07:00
       `);
     });
 

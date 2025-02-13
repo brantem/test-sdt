@@ -77,7 +77,7 @@ export async function handle(db: Database) {
       });
     });
 
-    // no need to do anything with the unsuccessful messages, they will be caught in the next hour
+    // no need to do anything with the unsuccessful messages, they will be caught in the next run
 
     if (successIds.length) {
       db.prepare(`DELETE FROM messages WHERE id IN (${successIds.map(() => "?").join(",")})`).run(successIds);
