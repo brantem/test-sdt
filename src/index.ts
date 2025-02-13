@@ -34,9 +34,9 @@ app.onError((err, c) => {
 });
 
 serve(app, (info) => {
+  console.log(`Server is running on http://localhost:${info.port}`);
   birthday.start(db);
   messages.start(db);
-  console.log(`Server is running on http://localhost:${info.port}`);
 });
 
 export default app;
