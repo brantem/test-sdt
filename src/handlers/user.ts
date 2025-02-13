@@ -1,9 +1,9 @@
 import { Hono } from "hono";
 import * as v from "valibot";
 import { SqliteError } from "better-sqlite3";
-import dayjs from "dayjs";
 
 import * as birthday from "../birthday/index.js";
+import * as messages from "../messages/index.js";
 
 import * as validator from "../lib/validator.js";
 import { isValidTimezone } from "../lib/helpers.js";
@@ -36,9 +36,7 @@ user.post("/", validator.json(userSchema), async (c) => {
     const user = stmt.get(body)!;
 
     const v = birthday.getUTCTimestamp(body.birthDate, body.location);
-    const d = dayjs();
-    // can't use isBefore/isAfter here. https://github.com/iamkun/dayjs/issues/1456
-    if (v.date() === d.date() && v.hour() > d.hour()) birthday.schedule(db, user.id, v);
+    if (messages.isProcessable(v)) birthday.schedule(db, user.id, v);
 
     return c.json({ success: true, error: null }, 200);
   } catch (err) {

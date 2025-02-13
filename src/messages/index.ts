@@ -2,6 +2,12 @@ import type { Database } from "better-sqlite3";
 import { CronJob } from "cron";
 import dayjs from "dayjs";
 
+export function isProcessable(v: dayjs.Dayjs) {
+  const d = dayjs();
+  // can't use isBefore/isAfter here. https://github.com/iamkun/dayjs/issues/1456
+  return v.date() === d.date() && v.hour() > d.hour();
+}
+
 // TODO: function to remove from messages
 
 function process(db: Database) {
