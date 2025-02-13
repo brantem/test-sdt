@@ -9,70 +9,73 @@ export function isProcessable(v: dayjs.Dayjs) {
   return v.date() === d.date() && v.hour() > d.hour();
 }
 
-type Message = {
+type Data = {
   id: number;
   email: string;
   message: string;
 };
 
-export async function send({ id, ...message }: Message) {
-  const ENDPOINT = process.env.MESSAGES_SEND_ENDPOINT || "";
-  const RETRIES = parseInt(process.env.MESSAGES_SEND_RETRIES || "3") || 3;
-  const RETRY_DELAY = parseInt(process.env.MESSAGES_SEND_RETRY_DELAY || "1000") || 1000;
-  const TIMEOUT = parseInt(process.env.MESSAGES_SEND_TIMEOUT || "1000") || 1000;
+export async function send({ id, ...data }: Data) {
+  const url = process.env.EMAIL_SERVICE_URL || "";
+  const maxAttempts = parseInt(process.env.EMAIL_SERVICE_RETRY_ATTEMPTS || "3") || 3;
+  const delay = parseInt(process.env.EMAIL_SERVICE_RETRY_DELAY_MS || "1000") || 1000;
+  const timeout = parseInt(process.env.EMAIL_SERVICE_TIMEOUT_MS || "1000") || 1000;
 
-  for (let attempt = 0; attempt < RETRIES; attempt++) {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
-      const response = await fetch(ENDPOINT, {
+      const response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(message),
-        signal: AbortSignal.timeout(TIMEOUT),
+        body: JSON.stringify(data),
+        signal: AbortSignal.timeout(timeout),
       });
       if (response.ok) {
         const data = await response.json();
         if (data.status === "sent") {
-          console.log(`messages.send(${id}): Sent ${attempt + 1}/${RETRIES}`);
+          console.log(`messages.send(${id}): Sent ${attempt + 1}/${maxAttempts}`);
           return id;
         }
       }
-
-      console.error(`messages.send(${id}): Failed ${attempt + 1}/${RETRIES}:`);
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") {
-        console.error(`messages.send(${id}): Request timed out ${attempt + 1}/${RETRIES}`);
-      } else {
-        console.error(`messages.send(${id}): Failed ${attempt + 1}/${RETRIES}`);
+        console.error(`messages.send(${id}): Request timed out ${attempt + 1}/${maxAttempts}`);
+        continue;
       }
     }
 
-    if (attempt < RETRIES) await sleep(RETRY_DELAY);
+    console.error(`messages.send(${id}): Failed ${attempt + 1}/${maxAttempts}`);
+    if (attempt < maxAttempts) await sleep(delay);
   }
 
   return null;
 }
 
-function handle(db: Database) {
+async function handle(db: Database) {
+  const concurrency = parseInt(process.env.EMAIL_SERVICE_CONCURRENCY || "1") || 1;
+
   try {
     const datetime = dayjs().format("YYYY-MM-DD HH:mm:ss");
-    console.log(`messages.send: ${datetime}`);
+    console.log(`messages.handle: ${datetime}`);
 
-    const stmt = db.prepare<[string]>(`
+    const stmt = db.prepare<[string], Data>(`
       SELECT m.id, u.email, replace(mt.content, '{{full_name}}', concat(u.first_name, ' ', u.last_name)) AS message
       FROM message_templates mt
       JOIN messages m ON m.template_id = mt.id
       JOIN users u ON u.id = m.user_id
       WHERE m.process_at <= ?
     `);
-    const messages = stmt.all(datetime);
-    if (!messages.length) return;
-    console.log(`messages.send: Found ${messages.length} messages`);
+    const items = stmt.all(datetime);
+    if (!items.length) return;
+    console.log(`messages.handle: Found ${items.length} messages`);
 
-    console.log(messages);
-
-    const successIds: Message["id"][] = [];
-    for (const message of messages) {
-      // TODO: send message
+    const successIds: Data["id"][] = [];
+    for (let i = 0; i < items.length; i += concurrency) {
+      const chunk = items.slice(i, i + concurrency);
+      const results = await Promise.allSettled(chunk.map((data) => send(data)));
+      results.forEach((result) => {
+        if (result.status !== "fulfilled" || !result.value) return;
+        successIds.push(result.value);
+      });
     }
 
     // no need to do anything with the unsuccessful messages, they will be caught in the next hour
@@ -80,7 +83,7 @@ function handle(db: Database) {
     if (successIds.length) {
       db.prepare(`DELETE FROM messages WHERE id IN (${successIds.map(() => "?").join(",")})`).run(successIds);
     }
-    console.log(`messages.send: Successfully sent ${successIds.length} messages`);
+    console.log(`messages.send: Successfully sent ${successIds.length}/${items.length} messages`);
   } catch (err) {
     console.error("messages.send", err);
   }

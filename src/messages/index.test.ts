@@ -4,10 +4,11 @@ import * as messages from "./index.js";
 
 describe("messages", () => {
   beforeAll(() => {
-    vi.stubEnv("MESSAGES_SEND_ENDPOINT", "https://example.com");
-    vi.stubEnv("MESSAGES_SEND_RETRIES", "3");
-    vi.stubEnv("MESSAGES_SEND_RETRY_DELAY", "2");
-    vi.stubEnv("MESSAGES_SEND_TIMEOUT", "1000");
+    vi.stubEnv("EMAIL_SERVICE_URL", "https://example.com");
+    vi.stubEnv("EMAIL_SERVICE_RETRY_ATTEMPTS", "3");
+    vi.stubEnv("EMAIL_SERVICE_RETRY_DELAY_MS", "2");
+    vi.stubEnv("EMAIL_SERVICE_TIMEOUT_MS", "1");
+    vi.stubEnv("EMAIL_SERVICE_BATCH_SIZE", "1");
   });
 
   afterAll(() => {
