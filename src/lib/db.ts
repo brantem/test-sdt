@@ -2,6 +2,11 @@ import Database from "better-sqlite3";
 
 export function init(filename = ":memory:") {
   const db = new Database(filename);
+
+  // it might be better to just open 2 connections to SQLite (reader & writer)
+  // instead of activating unsafe mode
+  db.unsafeMode(); // https://github.com/WiseLibs/better-sqlite3/issues/203
+
   db.pragma("journal_mode = WAL");
   db.pragma("synchronous = NORMAL");
   db.pragma("foreign_keys = ON");
