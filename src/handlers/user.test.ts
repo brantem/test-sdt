@@ -117,11 +117,13 @@ describe("/user", () => {
     beforeEach(async () => {
       db.exec(`
         INSERT INTO users (email, first_name, last_name, birth_date, location)
-        VALUES ('john@mail.com', 'John', 'Doe', '2025-01-01', 'Asia/Jakarta')
+        VALUES ('john@mail.com', 'John', 'Doe', '2025-01-01', 'Asia/Jakarta');
       `);
     });
 
-    it("successfully updates a user", async () => {
+    it("successfully updates a user and removes the message if the new birth_date is in a different date", async () => {
+      db.exec("INSERT INTO messages (user_id, template_id, process_at) VALUES (1, 1, '2025-01-01 02:00');");
+
       const res = await app.request("/user/1", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -135,6 +137,42 @@ describe("/user", () => {
           last_name: "Doe",
           birth_date: "2025-01-02",
           location: "Asia/Bangkok",
+        },
+      ]);
+      // message is removed because the new birth_date is in a different date
+      expect(db.prepare("SELECT * FROM messages").all()).toStrictEqual([]);
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({ success: true, error: null });
+    });
+
+    it("successfully updates a user and queue a message if the new birth_date is today", async () => {
+      db.exec(`
+        UPDATE users SET birth_date = '2025-01-02';
+        DELETE FROM messages;
+      `);
+
+      const res = await app.request("/user/1", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...jane, birthDate: "2025-01-01" }),
+      });
+      expect(db.prepare("SELECT * FROM users").all()).toStrictEqual([
+        {
+          id: 1,
+          email: "jane@mail.com",
+          first_name: "Jane",
+          last_name: "Doe",
+          birth_date: "2025-01-01",
+          location: "Asia/Bangkok",
+        },
+      ]);
+      // message is queued because birth_date is today
+      expect(db.prepare("SELECT * FROM messages").all()).toStrictEqual([
+        {
+          id: 1,
+          user_id: 1,
+          template_id: 1,
+          process_at: "2025-01-01 02:00:00",
         },
       ]);
       expect(res.status).toBe(200);

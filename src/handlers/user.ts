@@ -35,6 +35,7 @@ user.post("/", validator.json(userSchema), async (c) => {
     `);
     const user = stmt.get(body)!;
 
+    // add to queue if ok
     const v = birthday.getUTCTimestamp(body.birthDate, body.location);
     if (messages.isProcessable(v)) birthday.schedule(db, user.id, v);
 
@@ -49,18 +50,29 @@ user.post("/", validator.json(userSchema), async (c) => {
 });
 
 user.put("/:id", validator.json(userSchema), async (c) => {
+  const db = c.get("db");
+  const id = parseInt(c.req.param("id"));
   const body = await c.req.valid("json");
 
   try {
-    const stmt = c.get("db").prepare(`
+    const stmt = db.prepare(`
       UPDATE users
       SET email = @email, first_name = @firstName, last_name = @lastName, birth_date = @birthDate, location = @location
       WHERE id = @id
+      RETURNING id
     `);
-    const result = stmt.run({ id: c.req.param("id"), ...body });
+    const result = stmt.run({ id, ...body });
     if (!result.changes) return c.json({ success: false, error: { code: "NOT_FOUND" } }, 404);
 
-    // TODO: queue
+    // IMPROVE: get previous data before updating
+    // if birth_date changes, remove the old message from the queue and requeue if needed
+
+    // always remove from queue
+    birthday.cancel(db, id);
+
+    // requeue if needed
+    const v = birthday.getUTCTimestamp(body.birthDate, body.location);
+    if (messages.isProcessable(v)) birthday.schedule(db, id, v);
 
     return c.json({ success: true, error: null }, 200);
   } catch (err) {
@@ -76,6 +88,8 @@ user.delete("/:id", async (c) => {
   try {
     const result = c.get("db").prepare("DELETE FROM users WHERE id = ?").run(c.req.param("id"));
     if (!result.changes) return c.json({ success: false, error: { code: "NOT_FOUND" } }, 404);
+
+    // no need to remove the message, foreign key automatically removes it
 
     return c.json({ success: true, error: null }, 200);
   } catch (err) {
