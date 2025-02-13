@@ -6,7 +6,8 @@ import { logger } from "hono/logger";
 import type { Database } from "better-sqlite3";
 
 import user from "./handlers/user.js";
-import * as jobs from "./jobs/index.js";
+import * as birthday from "./birthday/index.js";
+import * as messages from "./messages/index.js";
 
 import { init as initDb } from "./lib/db.js";
 
@@ -33,7 +34,8 @@ app.onError((err, c) => {
 });
 
 serve(app, (info) => {
-  jobs.start(db);
+  birthday.start(db);
+  messages.start(db);
   console.log(`Server is running on http://localhost:${info.port}`);
 });
 
