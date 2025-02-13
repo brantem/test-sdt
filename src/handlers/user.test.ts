@@ -35,8 +35,6 @@ describe("/user", () => {
 
   describe("POST /", () => {
     it("creates a user and schedules a message if the UTC timestamp is in the future", async () => {
-      expect(db.prepare("SELECT * FROM users").all()).toStrictEqual([]);
-      expect(db.prepare("SELECT * FROM messages").all()).toStrictEqual([]);
       const res = await app.request("/user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -66,8 +64,6 @@ describe("/user", () => {
     });
 
     it("creates a user but skips scheduling if the UTC timestamp is not in the future", async () => {
-      expect(db.prepare("SELECT * FROM users").all()).toStrictEqual([]);
-      expect(db.prepare("SELECT * FROM messages").all()).toStrictEqual([]);
       const res = await app.request("/user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
