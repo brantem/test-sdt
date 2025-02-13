@@ -1,6 +1,7 @@
 import type { Database } from "better-sqlite3";
 import { CronJob } from "cron";
 import dayjs from "dayjs";
+import { sleep } from "../lib/helpers.js";
 
 export function isProcessable(v: dayjs.Dayjs) {
   const d = dayjs();
@@ -8,13 +9,50 @@ export function isProcessable(v: dayjs.Dayjs) {
   return v.date() === d.date() && v.hour() > d.hour();
 }
 
-function process(db: Database) {
-  type Message = {
-    id: number;
-    email: string;
-    message: string;
-  };
+type Message = {
+  id: number;
+  email: string;
+  message: string;
+};
 
+export async function send({ id, ...message }: Message) {
+  const ENDPOINT = process.env.MESSAGES_SEND_ENDPOINT || "";
+  const RETRIES = parseInt(process.env.MESSAGES_SEND_RETRIES || "3") || 3;
+  const RETRY_DELAY = parseInt(process.env.MESSAGES_SEND_RETRY_DELAY || "1000") || 1000;
+  const TIMEOUT = parseInt(process.env.MESSAGES_SEND_TIMEOUT || "1000") || 1000;
+
+  for (let attempt = 0; attempt < RETRIES; attempt++) {
+    try {
+      const response = await fetch(ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(message),
+        signal: AbortSignal.timeout(TIMEOUT),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data.status === "sent") {
+          console.log(`messages.send(${id}): Sent ${attempt + 1}/${RETRIES}`);
+          return id;
+        }
+      }
+
+      console.error(`messages.send(${id}): Failed ${attempt + 1}/${RETRIES}:`);
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        console.error(`messages.send(${id}): Request timed out ${attempt + 1}/${RETRIES}`);
+      } else {
+        console.error(`messages.send(${id}): Failed ${attempt + 1}/${RETRIES}`);
+      }
+    }
+
+    if (attempt < RETRIES) await sleep(RETRY_DELAY);
+  }
+
+  return null;
+}
+
+function handle(db: Database) {
   try {
     const datetime = dayjs().format("YYYY-MM-DD HH:mm:ss");
     console.log(`messages.send: ${datetime}`);
@@ -49,5 +87,5 @@ function process(db: Database) {
 }
 
 export function start(db: Database) {
-  CronJob.from({ cronTime: "0 * * * *", onTick: () => process(db), start: true }); // hourly
+  CronJob.from({ cronTime: "0 * * * *", onTick: () => handle(db), start: true }); // hourly
 }
