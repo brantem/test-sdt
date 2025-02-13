@@ -17,6 +17,7 @@ describe("/user", () => {
   };
 
   beforeEach(() => {
+    vi.setSystemTime(new Date(2025, 0, 1, 1, 0)); // 2025-01-01 01:00
     app = new Hono();
     db = initDb();
 
@@ -29,11 +30,13 @@ describe("/user", () => {
 
   afterEach(() => {
     db.close();
+    vi.useRealTimers();
   });
 
   describe("POST /", () => {
-    it("successfully creates a user", async () => {
+    it("creates a user and schedules a message if the UTC timestamp is in the future", async () => {
       expect(db.prepare("SELECT * FROM users").all()).toStrictEqual([]);
+      expect(db.prepare("SELECT * FROM messages").all()).toStrictEqual([]);
       const res = await app.request("/user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -49,6 +52,39 @@ describe("/user", () => {
           location: "Asia/Jakarta",
         },
       ]);
+      // UTC Timestamp: 2025-01-01 02:00:00
+      expect(db.prepare("SELECT * FROM messages").all()).toStrictEqual([
+        {
+          id: 1,
+          user_id: 1,
+          template_id: 1,
+          process_at: "2025-01-01 02:00:00",
+        },
+      ]);
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({ success: true, error: null });
+    });
+
+    it("creates a user but skips scheduling if the UTC timestamp is not in the future", async () => {
+      expect(db.prepare("SELECT * FROM users").all()).toStrictEqual([]);
+      expect(db.prepare("SELECT * FROM messages").all()).toStrictEqual([]);
+      const res = await app.request("/user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...john, location: "Asia/Hong_Kong" }), // UTC+08:00
+      });
+      expect(db.prepare("SELECT * FROM users").all()).toStrictEqual([
+        {
+          id: 1,
+          email: "john@mail.com",
+          first_name: "John",
+          last_name: "Doe",
+          birth_date: "2025-01-01",
+          location: "Asia/Hong_Kong",
+        },
+      ]);
+      // UTC Timestamp: 2025-01-01 01:00:00
+      expect(db.prepare("SELECT * FROM messages").all()).toStrictEqual([]);
       expect(res.status).toBe(200);
       expect(await res.json()).toEqual({ success: true, error: null });
     });
