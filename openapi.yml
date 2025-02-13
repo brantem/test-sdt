@@ -1,0 +1,192 @@
+openapi: 3.1.0
+info:
+  title: sdt
+  version: 0.0.0
+paths:
+  /user:
+    post:
+      tags:
+        - User
+      summary: Create User
+      operationId: create_user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserBody'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateUserResponse'
+        '422':
+          description: Email has already been used by another user
+          content:
+            application/json:
+              example:
+                user: null
+                error:
+                  code: EMAIL_SHOULD_BE_UNIQUE
+
+  /user/{id}:
+    put:
+      tags:
+        - User
+      summary: Update User
+      operationId: update_user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            title: User Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserBody'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateUserResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              example:
+                success: false
+                error:
+                  code: NOT_FOUND
+        '422':
+          description: Email has already been used by another user
+          content:
+            application/json:
+              example:
+                success: false
+                error:
+                  code: EMAIL_SHOULD_BE_UNIQUE
+    delete:
+      tags:
+        - User
+      summary: Delete User
+      operationId: delete_user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            title: User Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteUserResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              example:
+                success: false
+                error:
+                  code: NOT_FOUND
+
+
+components:
+  schemas:
+    CreateUserBody:
+      properties:
+        email:
+          type: string
+          examples: ["john@mail.com"]
+        firstName:
+          type: string
+          examples: ["John"]
+        lastName:
+          type: string
+          examples: ["Doe"]
+        birthDate:
+          type: string
+          format: date
+          examples: ["2025-01-01"]
+        location:
+          type: string
+          examples: ["Asia/Jakarta"]
+      type: object
+      required:
+        - email
+        - firstName
+        - lastName
+        - birthDate
+        - location
+    CreateUserResponse:
+      properties:
+        user:
+          type: object
+          properties:
+            id:
+              type: integer
+              examples: [1]
+          required:
+            - id
+        error:
+          type: 'null'
+      type: object
+      required:
+        - success
+        - error
+    UpdateUserBody:
+      properties:
+        email:
+          type: string
+          examples: ["john@mail.com"]
+        firstName:
+          type: string
+          examples: ["John"]
+        lastName:
+          type: string
+          examples: ["Doe"]
+        birthDate:
+          type: string
+          format: date
+          examples: ["2025-01-01"]
+        location:
+          type: string
+          examples: ["Asia/Jakarta"]
+      type: object
+      required:
+        - email
+        - firstName
+        - lastName
+        - birthDate
+        - location
+    UpdateUserResponse:
+      properties:
+        success:
+          type: boolean
+          examples: [true]
+        error:
+          type: 'null'
+      type: object
+      required:
+        - error
+    DeleteUserResponse:
+      properties:
+        success:
+          type: boolean
+          examples: [true]
+        error:
+          type: 'null'
+      type: object
+      required:
+        - error
