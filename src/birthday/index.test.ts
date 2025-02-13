@@ -13,6 +13,20 @@ describe("birthday", () => {
     expect(birthday.getUTCTimestamp(date, "Pacific/Kiritimati").format("YYYY-MM-DD HH:mm")).toBe("2024-12-31 19:00"); // UTC+14:00
   });
 
+  test("cancel", () => {
+    const db = initDb();
+
+    db.exec(`
+      INSERT INTO users (email, first_name, last_name, birth_date, location) VALUES ('a@mail.com', 'a', 'a', '2025-01-01', 'Asia/Jakarta');
+      INSERT INTO messages (user_id, template_id, process_at) VALUES (1, 1, '2025-01-01 02:00');
+    `);
+
+    birthday.cancel(db, 1);
+    expect(db.prepare("SELECT * FROM messages").all()).toStrictEqual([]);
+
+    db.close();
+  });
+
   describe("schedule", () => {
     let db: Database;
 

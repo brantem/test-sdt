@@ -8,8 +8,6 @@ export function isProcessable(v: dayjs.Dayjs) {
   return v.date() === d.date() && v.hour() > d.hour();
 }
 
-// TODO: function to remove from messages
-
 function process(db: Database) {
   type Message = {
     id: number;
