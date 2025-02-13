@@ -23,7 +23,9 @@ export function init(filename = ":memory:") {
       content TEXT NOT NULL
     );
     INSERT INTO message_templates
-    VALUES (1, 'Hey, {{full_name}} it''s your birthday') ON CONFLICT DO NOTHING;
+    VALUES (1, 'Hey, {{full_name}} it''s your birthday')
+    ON CONFLICT (id)
+    DO NOTHING;
 
     CREATE TABLE IF NOT EXISTS messages (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
