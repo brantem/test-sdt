@@ -19,7 +19,7 @@ export async function send({ id, ...data }: Data) {
   const url = process.env.EMAIL_SERVICE_URL || "";
   const maxAttempts = parseInt(process.env.EMAIL_SERVICE_RETRY_ATTEMPTS || "3") || 3;
   const delay = parseInt(process.env.EMAIL_SERVICE_RETRY_DELAY_MS || "1000") || 1000;
-  const timeout = parseInt(process.env.EMAIL_SERVICE_TIMEOUT_MS || "1000") || 1000;
+  const timeout = parseInt(process.env.EMAIL_SERVICE_TIMEOUT_MS || "5000") || 5000;
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
