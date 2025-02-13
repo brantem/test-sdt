@@ -18,7 +18,7 @@ describe("birthday", () => {
 
     db.exec(`
       INSERT INTO users (email, first_name, last_name, birth_date, location) VALUES ('a@mail.com', 'a', 'a', '2025-01-01', 'Asia/Jakarta');
-      INSERT INTO messages (user_id, template_id, process_at) VALUES (1, 1, '2025-01-01 02:00');
+      INSERT INTO messages (user_id, template_id, process_at) VALUES (1, 1, '2025-01-01 02:00:00');
     `);
 
     birthday.cancel(db, 1);

@@ -38,8 +38,8 @@ describe("messages", () => {
 
     test("retries after error and succeeds", async () => {
       fetchMock
-        .mockResponseOnce(() => ({ ok: false, body: "{}" }))
-        .mockResponseOnce(() => ({ ok: true, body: JSON.stringify({ status: "sent" }) }));
+        .mockResponseOnce({ ok: false, body: "{}" })
+        .mockResponseOnce({ ok: true, body: JSON.stringify({ status: "sent" }) });
 
       // TODO: test delay
 
@@ -48,7 +48,7 @@ describe("messages", () => {
     });
 
     test("retries after abort and succeeds", async () => {
-      fetchMock.mockAbortOnce().mockResponseOnce(() => ({ ok: true, body: JSON.stringify({ status: "sent" }) }));
+      fetchMock.mockAbortOnce().mockResponseOnce({ ok: true, body: JSON.stringify({ status: "sent" }) });
 
       // TODO: test delay
 

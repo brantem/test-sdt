@@ -122,7 +122,7 @@ describe("/user", () => {
     });
 
     it("successfully updates a user and removes the message if the new birth_date is in a different date", async () => {
-      db.exec("INSERT INTO messages (user_id, template_id, process_at) VALUES (1, 1, '2025-01-01 02:00');");
+      db.exec("INSERT INTO messages (user_id, template_id, process_at) VALUES (1, 1, '2025-01-01 02:00:00');");
 
       const res = await app.request("/user/1", {
         method: "PUT",
