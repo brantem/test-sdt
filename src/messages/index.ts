@@ -84,9 +84,9 @@ export async function handle(db: Database) {
     if (successIds.length) {
       db.prepare(`DELETE FROM messages WHERE id IN (${successIds.map(() => "?").join(",")})`).run(successIds);
     }
-    console.log(`messages.send: Successfully sent ${successIds.length}/${items.length} messages`);
+    console.log(`messages.handle: Successfully sent ${successIds.length}/${items.length} messages`);
   } catch (err) {
-    console.error("messages.send", err);
+    console.error("messages.handle", err);
   }
 }
 
