@@ -50,8 +50,10 @@ describe("messages", () => {
       expect(fetchMock).toHaveBeenCalledTimes(2);
     });
 
-    it("retries after abort and succeeds", async () => {
-      fetchMock.mockAbortOnce().mockResponseOnce({ ok: true, body: JSON.stringify({ status: "sent" }) });
+    it("retries after timeout and succeeds", async () => {
+      fetchMock
+        .mockResponseOnce(() => Promise.reject(new DOMException("The operation timed out.", "TimeoutError")))
+        .mockResponseOnce({ ok: true, body: JSON.stringify({ status: "sent" }) });
 
       // TODO: test delay
 
@@ -101,7 +103,9 @@ describe("messages", () => {
 
     it("sends messages and removes successfully processed ones", async () => {
       // first message succeeds, others fail
-      fetchMock.mockResponseOnce({ ok: true, body: JSON.stringify({ status: "sent" }) }).mockAbort();
+      fetchMock
+        .mockResponseOnce({ ok: true, body: JSON.stringify({ status: "sent" }) })
+        .mockResponse(() => Promise.reject(new DOMException("The operation timed out.", "TimeoutError")));
 
       db.exec(`
         INSERT INTO messages (user_id, template_id, process_at)

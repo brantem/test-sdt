@@ -38,8 +38,8 @@ export async function send({ id, ...data }: Data) {
           return id;
         }
       }
-    } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") {
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "TimeoutError") {
         console.error(`messages.send(${id}): Request timed out ${attempt + 1}/${maxAttempts}`);
         continue;
       }
