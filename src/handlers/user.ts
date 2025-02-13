@@ -39,10 +39,10 @@ user.post("/", validator.json(userSchema), async (c) => {
     const v = birthday.getUTCTimestamp(body.birthDate, body.location);
     if (messages.isProcessable(v)) birthday.schedule(db, user.id, v);
 
-    return c.json({ success: true, error: null }, 200);
+    return c.json({ user, error: null }, 200);
   } catch (err) {
     if (err instanceof SqliteError && err.code === "SQLITE_CONSTRAINT_UNIQUE") {
-      return c.json({ success: false, error: { code: "EMAIL_SHOULD_BE_UNIQUE" } }, 422);
+      return c.json({ user: null, error: { code: "EMAIL_SHOULD_BE_UNIQUE" } }, 422);
     }
     console.error("POST /user", err);
     throw err;

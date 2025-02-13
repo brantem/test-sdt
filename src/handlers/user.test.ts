@@ -62,7 +62,7 @@ describe("/user", () => {
         },
       ]);
       expect(res.status).toBe(200);
-      expect(await res.json()).toEqual({ success: true, error: null });
+      expect(await res.json()).toEqual({ user: { id: 1 }, error: null });
     });
 
     it("creates a user but skips scheduling if the UTC timestamp is not in the future", async () => {
@@ -86,7 +86,7 @@ describe("/user", () => {
       // UTC Timestamp: 2025-01-01 01:00:00
       expect(db.prepare("SELECT * FROM messages").all()).toStrictEqual([]);
       expect(res.status).toBe(200);
-      expect(await res.json()).toEqual({ success: true, error: null });
+      expect(await res.json()).toEqual({ user: { id: 1 }, error: null });
     });
 
     it("fails when email is duplicated", async () => {
@@ -101,7 +101,7 @@ describe("/user", () => {
         body: JSON.stringify(john),
       });
       expect(res.status).toBe(422);
-      expect(await res.json()).toEqual({ success: false, error: { code: "EMAIL_SHOULD_BE_UNIQUE" } });
+      expect(await res.json()).toEqual({ user: null, error: { code: "EMAIL_SHOULD_BE_UNIQUE" } });
     });
   });
 
