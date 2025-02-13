@@ -1,9 +1,9 @@
-import type { Database } from "better-sqlite3";
 import dayjs from "dayjs";
 
 import * as messages from "./index.js";
 
-import { init as initDb } from "../lib/db.js";
+import type * as types from "../types.js";
+import { open as openDb } from "../lib/db.js";
 
 describe("messages", () => {
   beforeAll(() => {
@@ -72,7 +72,7 @@ describe("messages", () => {
   });
 
   describe("handle", () => {
-    let db: Database;
+    let db: types.Database;
 
     beforeAll(() => {});
 
@@ -81,7 +81,7 @@ describe("messages", () => {
 
       fetchMock.resetMocks();
 
-      db = initDb();
+      db = openDb();
       db.exec(`
         INSERT INTO users (email, first_name, last_name, birth_date, location)
         VALUES

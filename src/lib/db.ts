@@ -1,18 +1,22 @@
 import Database from "better-sqlite3";
 
-export function init(filename = ":memory:") {
-  const db = new Database(filename);
+import type * as types from "../types.js";
 
-  // it might be better to just open 2 connections to SQLite (reader & writer)
-  // instead of activating unsafe mode
-  db.unsafeMode(); // https://github.com/WiseLibs/better-sqlite3/issues/203
+function _open(filename = ":memory:") {
+  const db = new Database(filename);
 
   db.pragma("journal_mode = WAL");
   db.pragma("synchronous = NORMAL");
   db.pragma("foreign_keys = ON");
 
+  return db;
+}
+
+export function open(filename = ":memory:"): types.Database {
+  const writer = _open(filename);
+
   // IMPROVE: migrations
-  db.exec(`
+  writer.exec(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       email TEXT NOT NULL,
@@ -43,5 +47,15 @@ export function init(filename = ":memory:") {
     );
   `);
 
-  return db;
+  let reader;
+  if (filename === ":memory:") {
+    // if we try to open two connections to ":memory:", it will result in two separate databases, so we assign reader to
+    // writer to ensure they share the same instance
+    reader = writer;
+    writer.unsafeMode(); // https://github.com/WiseLibs/better-sqlite3/issues/203
+  } else {
+    reader = open(filename);
+  }
+
+  return Object.assign(writer, { writer, reader });
 }

@@ -1,12 +1,13 @@
 import { Hono } from "hono";
-import type { Database } from "better-sqlite3";
 
 import user from "./user.js";
-import { init as initDb } from "../lib/db.js";
+
+import type * as types from "../types.js";
+import { open as openDb } from "../lib/db.js";
 
 describe("/user", () => {
   let app: Hono;
-  let db: Database;
+  let db: types.Database;
 
   const john = {
     email: " John@mail.com ",
@@ -19,7 +20,7 @@ describe("/user", () => {
   beforeEach(() => {
     vi.setSystemTime(new Date(2025, 0, 1, 1, 0)); // 2025-01-01 01:00
     app = new Hono();
-    db = initDb();
+    db = openDb();
 
     app.use("*", async (c, next) => {
       c.set("db", db);

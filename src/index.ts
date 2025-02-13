@@ -3,24 +3,24 @@ import "dotenv/config";
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { logger } from "hono/logger";
-import type { Database } from "better-sqlite3";
 
 import user from "./handlers/user.js";
 import * as birthday from "./birthday/index.js";
 import * as messages from "./messages/index.js";
 
-import { init as initDb } from "./lib/db.js";
+import type * as types from "./types.js";
+import { open as openDb } from "./lib/db.js";
 
 declare module "hono" {
   interface ContextVariableMap {
-    db: Database;
+    db: types.Database;
   }
 }
 
 const app = new Hono();
 app.use(logger());
 
-const db = initDb(process.env.DB_PATH);
+const db = openDb(process.env.DB_PATH);
 
 app.use("*", async (c, next) => {
   c.set("db", db);

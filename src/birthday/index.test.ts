@@ -1,8 +1,7 @@
-import type { Database } from "better-sqlite3";
-
 import * as birthday from "./index.js";
 
-import { init as initDb } from "../lib/db.js";
+import type * as types from "../types.js";
+import { open as openDb } from "../lib/db.js";
 
 describe("birthday", () => {
   test("getUTCTimestamp", () => {
@@ -14,7 +13,7 @@ describe("birthday", () => {
   });
 
   test("cancel", () => {
-    const db = initDb();
+    const db = openDb();
 
     db.exec(`
       INSERT INTO users (email, first_name, last_name, birth_date, location)
@@ -31,10 +30,10 @@ describe("birthday", () => {
   });
 
   describe("schedule", () => {
-    let db: Database;
+    let db: types.Database;
 
     beforeEach(() => {
-      db = initDb();
+      db = openDb();
     });
 
     afterEach(() => {
@@ -79,10 +78,10 @@ describe("birthday", () => {
   });
 
   describe("collect", () => {
-    let db: Database;
+    let db: types.Database;
 
     beforeEach(() => {
-      db = initDb();
+      db = openDb();
     });
 
     afterEach(() => {

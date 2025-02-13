@@ -1,7 +1,6 @@
 import { Hono } from "hono";
 import * as v from "valibot";
 
-import _app from "../index.js";
 import * as validator from "./validator.js";
 
 describe("issuesToError", () => {

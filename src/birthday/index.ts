@@ -1,8 +1,9 @@
-import type { Database } from "better-sqlite3";
 import { CronJob } from "cron";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc.js";
 import timezone from "dayjs/plugin/timezone.js";
+
+import type * as types from "../types.js";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -11,7 +12,7 @@ export function getUTCTimestamp(date: string, location: string) {
   return dayjs.tz(`${date}T09:00:00`, location).utc(); // TODO: dynamic time
 }
 
-export function cancel(db: Database, userId: number) {
+export function cancel(db: types.Database, userId: number) {
   try {
     const stmt = db.prepare(`
       DELETE FROM messages
@@ -24,7 +25,7 @@ export function cancel(db: Database, userId: number) {
   }
 }
 
-export function schedule(db: Database, userId: number, when: dayjs.Dayjs) {
+export function schedule(db: types.Database, userId: number, when: dayjs.Dayjs) {
   try {
     const stmt = db.prepare(`
       INSERT INTO messages (user_id, template_id, process_at)
@@ -38,7 +39,7 @@ export function schedule(db: Database, userId: number, when: dayjs.Dayjs) {
   }
 }
 
-export function collect(db: Database) {
+export function collect(db: types.Database) {
   type User = {
     id: number;
     birth_date: string;
@@ -56,7 +57,7 @@ export function collect(db: Database) {
     // `birth_date = date`, the UTC equivalent of their birthday would be `2024-12-31 19:00:00`, which is in the past,
     // meaning they would never receive a birthday message. by using a range, the user will be caught in the previous
     // day's run (2024-12-31), ensuring they get the message
-    const reader = db.prepare<[string, string], User>(`
+    const reader = db.reader.prepare<[string, string], User>(`
       SELECT id, birth_date, location
       FROM users
       WHERE birth_date BETWEEN ? AND ?
@@ -89,6 +90,6 @@ export function collect(db: Database) {
   }
 }
 
-export function start(db: Database) {
+export function start(db: types.Database) {
   CronJob.from({ cronTime: "0 0 * * *", onTick: () => collect(db), start: true }); // daily
 }
