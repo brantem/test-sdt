@@ -2,7 +2,7 @@ import { CronJob } from "cron";
 import dayjs from "dayjs";
 
 import type * as types from "../types.js";
-import { processInBatches, sleep } from "../lib/helpers.js";
+import { runConcurrently, sleep } from "../lib/helpers.js";
 
 export function isProcessable(v: dayjs.Dayjs) {
   const d = dayjs();
@@ -10,17 +10,17 @@ export function isProcessable(v: dayjs.Dayjs) {
   return v.date() === d.date() && v.hour() > d.hour();
 }
 
-type Data = {
+type Item = {
   id: number;
   email: string;
   message: string;
 };
 
-export async function send({ id, ...data }: Data) {
+export async function send({ id, ...data }: Item) {
   console.log(`messages.send(${id}): Sending`);
 
   const url = process.env.EMAIL_SERVICE_URL || "";
-  const maxAttempts = parseInt(process.env.EMAIL_SERVICE_RETRY_ATTEMPTS || "3") || 3;
+  const maxAttempts = parseInt(process.env.EMAIL_SERVICE_RETRY_ATTEMPTS || "5") || 5;
   const delay = parseInt(process.env.EMAIL_SERVICE_RETRY_DELAY_MS || "1000") || 1000;
   const timeout = parseInt(process.env.EMAIL_SERVICE_TIMEOUT_MS || "5000") || 5000;
 
@@ -54,13 +54,13 @@ export async function send({ id, ...data }: Data) {
 }
 
 export async function handle(db: types.Database) {
-  const concurrency = parseInt(process.env.EMAIL_SERVICE_CONCURRENCY || "1") || 1;
+  const concurrency = parseInt(process.env.EMAIL_SERVICE_CONCURRENCY || "5") || 5;
 
   try {
     const datetime = dayjs().format("YYYY-MM-DD HH:mm:ss");
     console.log(`messages.handle: ${datetime}`);
 
-    const stmt = db.prepare<[string], Data>(`
+    const stmt = db.prepare<[string], Item>(`
       SELECT m.id, u.email, replace(mt.content, '{{full_name}}', concat(u.first_name, ' ', u.last_name)) AS message
       FROM message_templates mt
       JOIN messages m ON m.template_id = mt.id
@@ -71,14 +71,8 @@ export async function handle(db: types.Database) {
     if (!items.length) return;
     console.log(`messages.handle: Found ${items.length} messages`);
 
-    const successIds: Data["id"][] = [];
-    await processInBatches(items, concurrency, async (items) => {
-      const results = await Promise.allSettled(items.map((data) => send(data)));
-      results.forEach((result) => {
-        if (result.status !== "fulfilled" || !result.value) return;
-        successIds.push(result.value);
-      });
-    });
+    const successIds: Item["id"][] = [];
+    await runConcurrently(items, concurrency, send, (id) => successIds.push(id));
 
     // no need to do anything with the unsuccessful messages, they will be caught in the next run
 
