@@ -2,7 +2,7 @@ import Database from "better-sqlite3";
 
 import type * as types from "../types.js";
 
-function _open(filename = ":memory:") {
+function _open(filename: string) {
   const db = new Database(filename);
 
   db.pragma("journal_mode = WAL");
@@ -54,7 +54,7 @@ export function open(filename = ":memory:"): types.Database {
     reader = writer;
     writer.unsafeMode(); // https://github.com/WiseLibs/better-sqlite3/issues/203
   } else {
-    reader = open(filename);
+    reader = _open(filename);
   }
 
   return Object.assign(writer, { writer, reader });
