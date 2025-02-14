@@ -13,6 +13,11 @@ A simple application that sends messages to users at 9 AM in their local time.
 
 ### How to Run
 
+Requirements:
+
+- Node.js (tested on v23.6.0)
+- npm (tested on 10.9.2)
+
 ```sh
 cp .env.example .env
 npm install
@@ -22,7 +27,7 @@ npm run build
 npm run start
 ```
 
-#### Test
+To run tests:
 
 ```sh
 npm run test
