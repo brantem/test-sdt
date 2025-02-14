@@ -84,8 +84,9 @@ describe("messages", () => {
         INSERT INTO users (email, first_name, last_name, birth_date, location)
         VALUES
           ('a@mail.com', 'a', 'a', '2025-01-01', 'Asia/Tokyo'),     -- UTC+09:00
-          ('b@mail.com', 'b', 'b', '2025-01-01', 'Asia/Hong_Kong'), -- UTC+08:00
-          ('c@mail.com', 'c', 'c', '2025-01-01', 'Asia/Jakarta');   -- UTC+07:00
+          ('b@mail.com', 'b', 'b', '2025-01-01', 'Asia/Tokyo'),     -- UTC+09:00
+          ('c@mail.com', 'c', 'c', '2025-01-01', 'Asia/Hong_Kong'), -- UTC+08:00
+          ('d@mail.com', 'c', 'c', '2025-01-01', 'Asia/Jakarta');   -- UTC+07:00
       `);
     });
 
@@ -106,23 +107,25 @@ describe("messages", () => {
         .mockResponse(() => Promise.reject(new DOMException("The operation timed out.", "TimeoutError")));
 
       db.exec(`
-        INSERT INTO messages (user_id, template_id, process_at)
+        INSERT INTO messages (user_id, template_id, status, process_at)
         VALUES
-          (1, 1, '2025-01-01 00:00:00'), -- message that failed in the previous run
-          (2, 1, '2025-01-01 01:00:00'), -- message that should be processed now
-          (3, 1, '2025-01-01 02:00:00'); -- future message (should not be processed yet)
+          (1, 1, 1, '2025-01-01 00:00:00'), -- message that is still being processed (should not be picked up to prevent duplication)
+          (2, 1, 0, '2025-01-01 00:00:00'), -- message that failed in the previous run
+          (3, 1, 0, '2025-01-01 01:00:00'), -- message that should be processed now
+          (4, 1, 0, '2025-01-01 02:00:00'); -- future message (should not be processed yet)
       `);
 
       await messages.handle(db);
       expect((await Promise.all(fetchMock.requests().map((req) => req.json()))).map((body) => body.email)).toEqual([
-        "a@mail.com", // success
-        "b@mail.com", // failed 1/3
-        "b@mail.com", // failed 2/3
-        "b@mail.com", // failed 3/3
+        "b@mail.com", // success
+        "c@mail.com", // failed 1/3
+        "c@mail.com", // failed 2/3
+        "c@mail.com", // failed 3/3
       ]);
-      expect(db.prepare("SELECT id FROM messages").all()).toStrictEqual([
-        { id: 2 }, // failed
-        { id: 3 }, // future message
+      expect(db.prepare("SELECT id, status FROM messages").all()).toStrictEqual([
+        { id: 1, status: 1 }, // still being processed
+        { id: 3, status: 0 }, // failed
+        { id: 4, status: 0 }, // future message
       ]);
     });
   });

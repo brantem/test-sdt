@@ -10,44 +10,55 @@ describe("helpers", () => {
     const items = [{ id: 1 }, { id: 2 }, { id: 3 }];
 
     it("should not modify items", async () => {
-      const onItem = () => Promise.resolve();
-      await helpers.runConcurrently(items, 1, onItem, () => {});
+      await helpers.runConcurrently(items, 1, {
+        onProcess() {
+          return Promise.resolve();
+        },
+      });
 
       expect(items).not.toHaveLength(0);
     });
 
     it("should run without a problem", async () => {
-      const successIds = new Set<number>();
+      const failedIds: number[] = [];
+      const successIds: number[] = [];
 
-      const onItem = async (item: (typeof items)[number]) => {
-        switch (item.id) {
-          case 1:
-            return Promise.reject();
-          case 2:
-            throw new Error("error");
-          default:
-            return Promise.resolve(item.id);
-        }
-      };
-      await helpers.runConcurrently(items, 1, onItem, (id) => successIds.add(id));
+      await helpers.runConcurrently(items, 1, {
+        async onProcess(item: (typeof items)[number]) {
+          switch (item.id) {
+            case 1:
+              return Promise.reject();
+            case 2:
+              throw new Error("error");
+            default:
+              return Promise.resolve(item.id);
+          }
+        },
+        onFail(item) {
+          failedIds.push(item.id);
+        },
+        onSuccess(item) {
+          successIds.push(item.id);
+        },
+      });
 
-      expect(successIds.has(1)).toBe(false); // reject
-      expect(successIds.has(2)).toBe(false); // throw
-      expect(successIds.has(3)).toBe(true); // success
+      expect(failedIds).toEqual([1 /* reject */, 2 /* throw */]);
+      expect(successIds).toEqual([3]);
     });
 
     it("should respect concurrency limit", async () => {
       let active = 0;
       let maxActive = 0;
 
-      const onItem = async (item: (typeof items)[0]) => {
-        active++;
-        maxActive = Math.max(maxActive, active);
-        await helpers.sleep(10);
-        active--;
-        return item.id;
-      };
-      await helpers.runConcurrently(items, 2, onItem, () => {});
+      await helpers.runConcurrently(items, 2, {
+        async onProcess(item: (typeof items)[0]) {
+          active++;
+          maxActive = Math.max(maxActive, active);
+          await helpers.sleep(10);
+          active--;
+          return item.id;
+        },
+      });
 
       expect(maxActive).toBe(2);
     });

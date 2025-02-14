@@ -65,21 +65,31 @@ export async function handle(db: types.Database) {
       FROM message_templates mt
       JOIN messages m ON m.template_id = mt.id
       JOIN users u ON u.id = m.user_id
-      WHERE m.process_at <= ?
+      WHERE m.status = 0 -- Scheduled
+        AND m.process_at <= ?
     `);
     const items = stmt.all(datetime);
     if (!items.length) return;
     console.log(`messages.handle(${datetime}): Found ${items.length} messages`);
 
-    const successIds: Item["id"][] = [];
-    await helpers.runConcurrently(items, concurrency, send, (id) => successIds.push(id));
+    // mark all messages as being processed
+    const messageIds = items.map((item) => item.id);
+    db.prepare(`UPDATE messages SET status = 1 WHERE id IN (${messageIds.map(() => "?").join(",")})`).run(messageIds);
 
-    // no need to do anything with the unsuccessful messages, they will be caught in the next run
+    const complete = db.prepare("DELETE FROM messages WHERE id = ?");
+    const requeue = db.prepare("UPDATE messages SET status = 0 WHERE id = ?");
 
-    if (successIds.length) {
-      db.prepare(`DELETE FROM messages WHERE id IN (${successIds.map(() => "?").join(",")})`).run(successIds);
-    }
-    console.log(`messages.handle(${datetime}): Successfully sent ${successIds.length}/${items.length} messages`);
+    let success = 0;
+    await helpers.runConcurrently(items, concurrency, {
+      onProcess: send,
+      onFail: (item) => requeue.run(item.id),
+      onSuccess: (item) => {
+        complete.run(item.id);
+        success++;
+      },
+    });
+
+    console.log(`messages.handle(${datetime}): Successfully sent ${success}/${items.length} messages`);
   } catch (err) {
     console.error(`messages.handle(${datetime}):`, err);
   }

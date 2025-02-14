@@ -13,11 +13,14 @@ export async function sleep(ms: number): Promise<void> {
 
 // at any given time, there will be at most n items being processed simultaneously. when an item finishes processing, a
 // new item is pulled from the queue to maintain the concurrency level until all items are processed.
-export async function runConcurrently<Item extends { id: any }, OnItem extends (item: Item) => Promise<any>>(
+export async function runConcurrently<Item extends { id: any }>(
   items: Item[],
   concurrency: number,
-  onItem: OnItem,
-  onComplete: (value: Awaited<ReturnType<OnItem>>) => void
+  cb: {
+    onProcess: (item: Item) => Promise<any>;
+    onFail?: (item: Item) => void;
+    onSuccess?: (item: Item) => void;
+  }
 ) {
   const queue = [...items]; // avoid mutating the original
   const processing = new Map<Item["id"], Promise<void>>();
@@ -28,9 +31,10 @@ export async function runConcurrently<Item extends { id: any }, OnItem extends (
     while (processing.size < concurrency && queue.length > 0) {
       const item = queue.shift()!;
 
-      const promise = onItem(item)
-        .then(onComplete)
-        .catch(() => {}) // if this doesnt exists, finally won't run
+      const promise = cb
+        .onProcess(item)
+        .then(() => cb.onSuccess?.(item))
+        .catch(() => cb.onFail?.(item)) // if this doesnt exists, finally won't run
         .finally(() => processing.delete(item.id));
       processing.set(item.id, promise);
     }
