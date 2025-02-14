@@ -40,6 +40,7 @@ export function open(filename = ":memory:"): types.Database {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER NOT NULL,
       template_id INTEGER NOT NULL,
+      status INTEGER NOT NULL DEFAULT 0, -- 0 = Scheduled, 1 = Processing
       process_at DATETIME NOT NULL,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
       FOREIGN KEY (template_id) REFERENCES message_templates(id) ON DELETE CASCADE,

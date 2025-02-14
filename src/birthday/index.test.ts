@@ -52,6 +52,7 @@ describe("birthday", () => {
           id: 1,
           user_id: 1,
           template_id: 1,
+          status: 0,
           process_at: "2025-01-01 02:00:00",
         },
       ]);
@@ -69,6 +70,7 @@ describe("birthday", () => {
           id: 1,
           user_id: 1,
           template_id: 1,
+          status: 0,
           process_at: "2025-01-01 01:00:00",
         },
       ]);
@@ -109,12 +111,14 @@ describe("birthday", () => {
           id: 1,
           user_id: 1,
           template_id: 1,
+          status: 0,
           process_at: "2025-01-01 20:00:00",
         },
         {
           id: 2,
           user_id: 2,
           template_id: 1,
+          status: 0,
           process_at: "2025-01-01 02:00:00",
         },
       ]);
@@ -130,12 +134,14 @@ describe("birthday", () => {
           id: 1,
           user_id: 1,
           template_id: 1,
+          status: 0,
           process_at: "2025-01-01 20:00:00",
         },
         {
           id: 2,
           user_id: 2,
           template_id: 1,
+          status: 0,
           process_at: "2025-01-01 02:00:00",
         },
       ]);
@@ -150,12 +156,14 @@ describe("birthday", () => {
           id: 1,
           user_id: 3,
           template_id: 1,
+          status: 0,
           process_at: "2025-01-01 00:00:00",
         },
         {
           id: 2,
           user_id: 4,
           template_id: 1,
+          status: 0,
           process_at: "2024-12-31 19:00:00",
         },
       ]);
