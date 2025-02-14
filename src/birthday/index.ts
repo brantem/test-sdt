@@ -39,19 +39,19 @@ export function schedule(db: types.Database, userId: number, when: dayjs.Dayjs) 
   }
 }
 
+type User = {
+  id: number;
+  birth_date: string;
+  location: string;
+};
+
 export function collect(db: types.Database) {
-  type User = {
-    id: number;
-    birth_date: string;
-    location: string;
-  };
+  const today = dayjs();
+  const _today = today.format("YYYY-MM-DD");
+  const next = today.add(1, "day");
+  console.log(`birthday.collect(${_today}): Starting`);
 
   try {
-    const d = dayjs();
-    const date = d.format("YYYY-MM-DD");
-    const next = dayjs(date).add(1, "day");
-    console.log(`birthday.collect(${date}): Starting`);
-
     // we need to get users with birthdays between today and today+1 to ensure we don't miss anyone. example: suppose
     // today is 2025-01-01, and a user has a birthdate of 2025-01-01 in Pacific/Kiritimati. if we only query
     // `birth_date = date`, the UTC equivalent of their birthday would be `2024-12-31 19:00:00`, which is in the past,
@@ -70,9 +70,9 @@ export function collect(db: types.Database) {
     `);
 
     let i = 0;
-    for (const user of reader.iterate(date, next.format("YYYY-MM-DD"))) {
+    for (const user of reader.iterate(_today, next.format("YYYY-MM-DD"))) {
       const v = getUTCTimestamp(user.birth_date, user.location);
-      const isSameDate = v.date() === d.date();
+      const isSameDate = v.date() === today.date();
       const isNextDate = v.date() === next.date();
       const isMidnight = v.hour() === 0;
 
@@ -84,9 +84,9 @@ export function collect(db: types.Database) {
       i++;
     }
 
-    console.log(`birthday.collect(${date}): Queued ${i} messages`);
+    console.log(`birthday.collect(${_today}): Queued ${i} messages`);
   } catch (err) {
-    console.error("birthday.collect(date):", err);
+    console.error(`birthday.collect(${_today}):`, err);
   }
 }
 

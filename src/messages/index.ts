@@ -2,7 +2,7 @@ import { CronJob } from "cron";
 import dayjs from "dayjs";
 
 import type * as types from "../types.js";
-import { runConcurrently, sleep } from "../lib/helpers.js";
+import * as helpers from "../lib/helpers.js";
 
 export function isProcessable(v: dayjs.Dayjs) {
   const d = dayjs();
@@ -47,7 +47,7 @@ export async function send({ id, ...data }: Item) {
     }
 
     console.error(`messages.send(${id}): Failed ${attempt + 1}/${maxAttempts}`);
-    if (attempt < maxAttempts) await sleep(delay);
+    if (attempt < maxAttempts) await helpers.sleep(delay);
   }
 
   return Promise.reject();
@@ -56,10 +56,10 @@ export async function send({ id, ...data }: Item) {
 export async function handle(db: types.Database) {
   const concurrency = parseInt(process.env.EMAIL_SERVICE_CONCURRENCY || "5") || 5;
 
-  try {
-    const datetime = dayjs().format("YYYY-MM-DD HH:mm:ss");
-    console.log(`messages.handle: ${datetime}`);
+  const datetime = dayjs().format("YYYY-MM-DD HH:mm:ss");
+  console.log(`messages.handle(${datetime}): Starting`);
 
+  try {
     const stmt = db.prepare<[string], Item>(`
       SELECT m.id, u.email, replace(mt.content, '{{full_name}}', concat(u.first_name, ' ', u.last_name)) AS message
       FROM message_templates mt
@@ -69,19 +69,19 @@ export async function handle(db: types.Database) {
     `);
     const items = stmt.all(datetime);
     if (!items.length) return;
-    console.log(`messages.handle: Found ${items.length} messages`);
+    console.log(`messages.handle(${datetime}): Found ${items.length} messages`);
 
     const successIds: Item["id"][] = [];
-    await runConcurrently(items, concurrency, send, (id) => successIds.push(id));
+    await helpers.runConcurrently(items, concurrency, send, (id) => successIds.push(id));
 
     // no need to do anything with the unsuccessful messages, they will be caught in the next run
 
     if (successIds.length) {
       db.prepare(`DELETE FROM messages WHERE id IN (${successIds.map(() => "?").join(",")})`).run(successIds);
     }
-    console.log(`messages.handle: Successfully sent ${successIds.length}/${items.length} messages`);
+    console.log(`messages.handle(${datetime}): Successfully sent ${successIds.length}/${items.length} messages`);
   } catch (err) {
-    console.error("messages.handle", err);
+    console.error(`messages.handle(${datetime}):`, err);
   }
 }
 
