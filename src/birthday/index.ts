@@ -90,6 +90,8 @@ export function collect(db: types.Database) {
   }
 }
 
+/* v8 ignore start */
 export function start(db: types.Database) {
   CronJob.from({ cronTime: "0 0 * * *", onTick: () => collect(db), start: true }); // daily
 }
+/* v8 ignore stop */

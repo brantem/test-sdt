@@ -35,7 +35,7 @@ describe("messages", () => {
 
     it("sends message successfully", async () => {
       fetchMock.mockResponse(() => ({ ok: true, body: JSON.stringify({ status: "sent" }) }));
-      expect(await messages.send(message)).toBe(message.id);
+      await expect(messages.send(message)).resolves.toBe(message.id);
       expect(fetchMock).toHaveBeenCalledTimes(1);
     });
 
@@ -46,7 +46,7 @@ describe("messages", () => {
 
       // TODO: test delay
 
-      expect(await messages.send(message)).toBe(message.id);
+      await expect(messages.send(message)).resolves.toBe(message.id);
       expect(fetchMock).toHaveBeenCalledTimes(2);
     });
 
@@ -57,24 +57,22 @@ describe("messages", () => {
 
       // TODO: test delay
 
-      expect(await messages.send(message)).toBe(message.id);
+      await expect(messages.send(message)).resolves.toBe(message.id);
       expect(fetchMock).toHaveBeenCalledTimes(2);
     });
 
-    it("returns null after reaching max retries", async () => {
+    it("rejects after reaching max retries", async () => {
       fetchMock.mockResponse({ ok: false, body: undefined });
 
       // TODO: test delay
 
-      expect(await messages.send(message)).toBeNull();
+      await expect(messages.send(message)).rejects.toBeUndefined();
       expect(fetchMock).toHaveBeenCalledTimes(3);
     });
   });
 
   describe("handle", () => {
     let db: types.Database;
-
-    beforeAll(() => {});
 
     beforeEach(() => {
       vi.setSystemTime(new Date(2025, 0, 1, 1, 0)); // 2025-01-01 01:00

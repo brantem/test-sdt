@@ -34,17 +34,15 @@ describe("birthday", () => {
 
     beforeEach(() => {
       db = openDb();
-    });
 
-    afterEach(() => {
-      db.close();
-    });
-
-    beforeEach(() => {
       db.exec(`
         INSERT INTO users (email, first_name, last_name, birth_date, location)
         VALUES ('a@mail.com', 'a', 'a', '2025-01-01', 'Asia/Jakarta');
       `);
+    });
+
+    afterEach(() => {
+      db.close();
     });
 
     it("inserts a new message", () => {
@@ -82,13 +80,7 @@ describe("birthday", () => {
 
     beforeEach(() => {
       db = openDb();
-    });
 
-    afterEach(() => {
-      db.close();
-    });
-
-    beforeEach(() => {
       db.exec(`
         INSERT INTO users (email, first_name, last_name, birth_date, location)
         VALUES
@@ -98,6 +90,10 @@ describe("birthday", () => {
           ('d@mail.com', 'd', 'd', '2025-01-01', 'Pacific/Kiritimati'), -- UTC+14:00
           ('e@mail.com', 'e', 'e', '2025-01-02', 'Asia/Jakarta');       -- UTC+07:00
       `);
+    });
+
+    afterEach(() => {
+      db.close();
     });
 
     it("returns early when no birthdays are found", () => {

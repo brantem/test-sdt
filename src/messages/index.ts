@@ -36,7 +36,7 @@ export async function send({ id, ...data }: Data) {
         const data = await response.json();
         if (data.status === "sent") {
           console.log(`messages.send(${id}): Sent ${attempt + 1}/${maxAttempts}`);
-          return id;
+          return Promise.resolve(id);
         }
       }
     } catch (err) {
@@ -50,7 +50,7 @@ export async function send({ id, ...data }: Data) {
     if (attempt < maxAttempts) await sleep(delay);
   }
 
-  return null;
+  return Promise.reject();
 }
 
 export async function handle(db: types.Database) {
@@ -91,6 +91,8 @@ export async function handle(db: types.Database) {
   }
 }
 
+/* v8 ignore start */
 export function start(db: types.Database) {
   CronJob.from({ cronTime: "0 * * * *", onTick: () => handle(db), start: true }); // hourly
 }
+/* v8 ignore stop */
